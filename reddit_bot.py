@@ -3,6 +3,9 @@ import my_info
 import argparse
 from praw.models import MoreComments
 import time
+import urllib
+import requests
+from imageai.Detection import ObjectDetection
 
 # a reddit instance
 
@@ -16,27 +19,43 @@ def bot_login():
             
 r = bot_login()
 
-
-# def run_bot(r):
-#     for submission in r.subreddit('all').rising():
-#         for comment in submission.comments:
-#             if not isinstance(comment, MoreComments):
-#                 if check_phrase(comment):
-#                     print("--------------------------------------------------------------------------------")
-#                     print(comment.body)
-#                     print(submission.title)
-#                     comment.reply("this is a test by a bot")
-#                     # print(submission.title)
-#                     print("--------------------------------------------------------------------------------")
-#                     break
-#                     #time.sleep(600)
-
 def run_bot(r):
-    for submission in r.subreddit('all').new():
+    for submission in r.subreddit('cats').new():
         if not submission.is_self and not submission.is_video:
-            if "i.redd.it" in submission.url:
-                print(submission.url)
-                time.sleep(5)
+            if "i.redd.it" in submission.url and not submission.over_18:
+
+                image = requests.get(submission.url)
+
+                file = open("./input/test.jpg", "wb")
+                file.write(image.content)
+                file.close()
+                
+                print("File downloaded successfully")
+
+                model_path = "./models/yolo-tiny.h5"
+                input_path = "./input/test.jpg"
+                output_path = "./output/newimage.jpg"
+
+                detector = ObjectDetection()
+                detector.setModelTypeAsTinyYOLOv3()
+                detector.setModelPath(model_path)
+                detector.loadModel()
+                detections = detector.detectObjectsFromImage(input_image=input_path, output_image_path=output_path, minimum_percentage_probability=20)
+
+                print("Image parsed successfully")
+
+                if not bool(detections):
+                    print("No objects were detected")
+                    print("--------------------------------------------------------------------------")
+
+                for eachItem in detections:
+                    print(eachItem["name"], ": ", eachItem["percentage_probability"])
+                    print("--------------------------------------------")
+                
+
+                time.sleep(30)
+
+                
 
 def check_phrase(comment):
     phraseList = ['awesome', 'haha', 'cool', 'lol']
@@ -45,8 +64,7 @@ def check_phrase(comment):
     else:
         return False
 
-while True:
-    run_bot(r)
+run_bot(r)
 
 
 
