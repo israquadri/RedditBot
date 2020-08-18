@@ -6,6 +6,14 @@ import time
 import urllib
 import requests
 from imageai.Detection import ObjectDetection
+from imageai.Prediction import ImagePrediction
+import sqlite3
+from data import already_commented
+
+# connection = sqlite.connect('pizza.db')
+# CREATE_CACHE_TABLE = '''CREATE TABLE IF NOT EXISTS cache (
+#                         hash TEXT PRIMARY KEY
+#                     )'''
 
 # a reddit instance
 
@@ -19,52 +27,60 @@ def bot_login():
             
 r = bot_login()
 
+
 def run_bot(r):
-    for submission in r.subreddit('cats').new():
-        if not submission.is_self and not submission.is_video:
-            if "i.redd.it" in submission.url and not submission.over_18:
 
-                image = requests.get(submission.url)
+#setting up ImageAI model
+    model_path = "./models/yolo-tiny.h5"
+    input_path = "./input/test.jpg"
+    output_path = "./output/newimage.jpg"
 
-                file = open("./input/test.jpg", "wb")
-                file.write(image.content)
-                file.close()
-                
-                print("File downloaded successfully")
+    detector = ObjectDetection()
+    detector.setModelTypeAsTinyYOLOv3()
+    detector.setModelPath(model_path)
+    detector.loadModel()
+    custom = detector.CustomObjects(pizza=True)
 
-                model_path = "./models/yolo-tiny.h5"
-                input_path = "./input/test.jpg"
-                output_path = "./output/newimage.jpg"
+#starting to stream through r/all, sorting by new
+    for submission in r.subreddit('test').new():
+        if "i.redd.it" in submission.url and not submission.over_18: #checking if its a reddit-hosted image
 
-                detector = ObjectDetection()
-                detector.setModelTypeAsTinyYOLOv3()
-                detector.setModelPath(model_path)
-                detector.loadModel()
-                detections = detector.detectObjectsFromImage(input_image=input_path, output_image_path=output_path, minimum_percentage_probability=20)
+            #requesting image from url
+            image = requests.get(submission.url)
 
-                print("Image parsed successfully")
+            #writing the reddit image to local file
+            file = open("./input/test.jpg", "wb")
+            file.write(image.content)
+            file.close()
 
-                if not bool(detections):
-                    print("No objects were detected")
-                    print("--------------------------------------------------------------------------")
+            #detecting all objects in image
+            detections = detector.detectCustomObjectsFromImage(custom_objects=custom, input_image=input_path, output_image_path=output_path, minimum_percentage_probability=10)
 
-                for eachItem in detections:
-                    print(eachItem["name"], ": ", eachItem["percentage_probability"])
-                    print("--------------------------------------------")
-                
+            #if there's a pizza and i haven't already commented on this post
+            if pizza_present(detections) and submission.id not in already_commented:
+                reply_(submission)
+                print("replied to a post")
+                print("----------------------------------------")
+                print(already_commented)
+            
+            #delay so that i'm not rate limited
+            time.sleep(10)
 
-                time.sleep(30)
+# add the submission id to the set (to avoid replying to the same post) and comment
+def reply_(submission):
+    already_commented.add(submission.id)
+    submission.reply("Hey there, " + submission.author.name + ". It looks like your post contains a pizza. " +
+        "I've detected " + str(len(already_commented)) + " pizzas on Reddit.\n\n\n\n---\n\n^Beep boop. " +
+        "^I am a bot.")
 
-                
 
-def check_phrase(comment):
-    phraseList = ['awesome', 'haha', 'cool', 'lol']
-    if any(phrase in comment.body.lower() for phrase in phraseList):
-        return True
-    else:
-        return False
+def pizza_present(detections):
+    #if dictionary isn't empty, a pizza was detected so there is a pizza present
+    return bool(detections)
+
 
 run_bot(r)
+
 
 
 

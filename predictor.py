@@ -2,8 +2,8 @@ from imageai.Prediction import ImagePrediction
 
 
 prediction = ImagePrediction()
-prediction.setModelTypeAsDenseNet()
-prediction.setModelPath("./models/DenseNet-BC-121-32.h5")
+prediction.setModelTypeAsInceptionV3()
+prediction.setModelPath("./models/inception_v3_weights_tf_dim_ordering_tf_kernels.h5")
 prediction.loadModel()
 
 
