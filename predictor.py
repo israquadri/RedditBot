@@ -8,8 +8,10 @@ prediction.loadModel()
 
 
 
-predictions, probabilities = prediction.predictImage("./input/test.jpg", result_count=10)
-for eachPrediction, eachProbability in zip(predictions, probabilities):
-	print("-----------------------------------------------")
-	print(eachPrediction, ": ", eachProbability)
-	print("-----------------------------------------------")
+predictions, probabilities = prediction.predictImage("./input/test.jpg", result_count=2)
+# for eachPrediction, eachProbability in zip(predictions, probabilities):
+# 	print("-----------------------------------------------")
+# 	print(eachPrediction, ": ", eachProbability)
+# 	print("-----------------------------------------------")
+print(predictions)
+print(probabilities)
