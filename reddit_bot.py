@@ -25,7 +25,7 @@ def bot_login():
                 password = my_info.my_password,
                 client_id = my_info.my_id,
                 client_secret = my_info.my_secret,
-                user_agent = "informativekarma bot v 0.1")
+                user_agent = "banana bot v 0.1")
     return reddit
             
 r = bot_login()
@@ -42,10 +42,10 @@ def run_bot(r):
     detector.setModelTypeAsTinyYOLOv3()
     detector.setModelPath(model_path)
     detector.loadModel()
-    custom = detector.CustomObjects(cow=True)
+    custom = detector.CustomObjects(banana=True)
 
 #starting to stream through r/all, sorting by new
-    for submission in r.subreddit('cows').stream.submissions():
+    for submission in r.subreddit('all').stream.submissions():
         if "i.redd.it" in submission.url: #checking if its a reddit-hosted image
 
             #requesting image from url
@@ -57,23 +57,24 @@ def run_bot(r):
             file.close()
 
             #detecting all objects in image
-            detections = detector.detectCustomObjectsFromImage(custom_objects=custom, input_image=input_path, output_image_path=output_path, minimum_percentage_probability=30)
+            detections = detector.detectCustomObjectsFromImage(custom_objects=custom, input_image=input_path, output_image_path=output_path, minimum_percentage_probability=15)
 
-            #if there's a pizza and i haven't already commented on this post
-            if pizza_present(detections) and not check_db(submission.id):
+            #if there's a banana and i haven't already commented on this post
+            if banana_present(detections) and not check_db(submission.id):
                 reply_(submission)
-                print("replied to a post")
-                print("----------------------------------------")
-            
-            #delay so that i'm not rate limited
+                print("replied to a post: " + str(submission.url))
+                time.sleep(600) #avoid getting rate limited bc new account
+
             time.sleep(10)
+
+    connection.close()
 
 # add the submission id to the set (to avoid replying to the same post) and comment
 def reply_(submission):
     cursor.execute('''INSERT INTO reddit_posts (id, title) VALUES (?, ?)''', (submission.id, submission.title,))
     connection.commit()
-    submission.reply("Hey there, " + submission.author.name + ". It looks like your post contains a cow. " +
-        "I've detected " + str(get_count()) + " cows on Reddit.\n\n\n\n---\n\n^Beep ^boop. ^I ^am ^a ^bot.")
+    submission.reply("Hello, u/" + submission.author.name + ". It looks like your post contains a banana. Me love banana.\n" +
+        "I've found " + str(get_count()) + " bananas on Reddit.\n\n\n\n---\n\n^Beep ^boop. ^I ^am ^a ^bot.")
 
 
 def check_db(submission_id):
@@ -83,11 +84,11 @@ def check_db(submission_id):
     return result #if result is true, then id already exists in database
 
 
-def pizza_present(detections):
-    #if dictionary isn't empty, a pizza was detected so there is a pizza present
+def banana_present(detections):
+    #if dictionary isn't empty, a banana was detected so there is a banana present
     return bool(detections)
 
-#counts # of submissions in table (total pizzas i've detected)
+#counts # of submissions in table (total bananas i've detected)
 def get_count():
     count = cursor.execute('select * from reddit_posts;')
     return len(count.fetchall())

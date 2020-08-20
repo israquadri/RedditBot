@@ -10,13 +10,13 @@ detector = ObjectDetection()
 detector.setModelTypeAsTinyYOLOv3()
 detector.setModelPath(model_path)
 detector.loadModel()
-custom = detector.CustomObjects(pizza=True)
+custom = detector.CustomObjects(banana=True)
 
 # image = Image.open(input_path)
 # data = asarray(image)
 # print(type(data))
 
-detections = detector.detectCustomObjectsFromImage(custom_objects=custom, input_image=input_path, output_image_path=output_path, minimum_percentage_probability=20)
+detections = detector.detectCustomObjectsFromImage(custom_objects=custom, input_image=input_path, output_image_path=output_path, minimum_percentage_probability=10)
 
 print(bool(detections))
 print(detections)
